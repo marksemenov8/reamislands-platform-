@@ -1,433 +1,570 @@
-// Wellness Baseline Score (WBS) — schema + scoring
-// Source: Wellness Baseline Score (WBS) assessment.pdf (Notion export)
-// Tune weights here; all UI/intake reads from this module.
+// Wellness Baseline Score (WBS) v1.0
+// Engine spec: DIT Platform Specification v2.2
 
-export type WbsSection =
-  | "movement"
-  | "recovery"
-  | "lifestyle_risk"
-  | "emotional"
-  | "context"
+export type WbsSection = "intent" | "movement" | "sleep" | "lifestyle" | "social" | "medical"
 
-export type WbsOption = { value: string; label: string; score: number }
+export const WBS_SECTION_LABELS: Record<WbsSection, string> = {
+  intent: "Your Goal",
+  movement: "Movement & Physical Load",
+  sleep: "Sleep & Recovery",
+  lifestyle: "Lifestyle & Risk",
+  social: "Social & Emotional",
+  medical: "Body & Medical Context",
+}
+
+export type WbsOption = { value: string; label: string }
 
 export type WbsQuestion =
   | {
+      type: "choice"
       id: string
       section: WbsSection
       title: string
       hint?: string
-      type: "choice"
-      required: boolean
       options: WbsOption[]
     }
   | {
+      type: "height_weight"
       id: string
       section: WbsSection
       title: string
       hint?: string
-      type: "number"
-      required: boolean
-      min?: number
-      max?: number
-      unit?: string
     }
 
-export const WBS_SECTION_LABELS: Record<WbsSection, string> = {
-  movement: "Movement & Physical Load",
-  recovery: "Sleep & Recovery",
-  lifestyle_risk: "Lifestyle & Risk",
-  emotional: "Social, Emotional & Stress",
-  context: "Body & Medical Context",
-}
-
 export const WBS_QUESTIONS: WbsQuestion[] = [
-  // Section 1 — Movement
+  // Q1 — Intent (Q-INT) — must be first
   {
+    type: "choice",
+    id: "intent",
+    section: "intent",
+    title: "What brought you here right now?",
+    hint: "Choose what fits best — this shapes your personalised programme.",
+    options: [
+      { value: "A", label: "Body exhausted — no energy, need to reset" },
+      { value: "B", label: "Mind won't rest — stress, poor sleep, burnout" },
+      { value: "C", label: "Change my body — weight, shape, composition" },
+      { value: "D", label: "Improve my appearance — skin, aesthetics, rejuvenation" },
+      { value: "E", label: "Optimise — biomarkers, longevity, health data" },
+      { value: "F", label: "Physical recovery — sport, training, overreach" },
+    ],
+  },
+  // Q2 — Steps (BODY)
+  {
+    type: "choice",
     id: "steps",
     section: "movement",
     title: "Daily steps",
-    hint: "How many steps do you usually take per day? (Phone or smartwatch.)",
-    type: "choice",
-    required: true,
+    hint: "How many steps do you take on a typical day?",
     options: [
-      { value: "lt3k", label: "Less than 3,000", score: 0 },
-      { value: "3to6k", label: "3,000 – 5,999", score: 0.25 },
-      { value: "6to9k", label: "6,000 – 8,999", score: 0.5 },
-      { value: "9to12k", label: "9,000 – 11,999", score: 0.75 },
-      { value: "12kplus", label: "12,000+", score: 1 },
+      { value: "lt3k", label: "Less than 3,000" },
+      { value: "3to6k", label: "3,000 – 5,999" },
+      { value: "6to9k", label: "6,000 – 8,999" },
+      { value: "9to12k", label: "9,000 – 11,999" },
+      { value: "12kplus", label: "12,000+" },
     ],
   },
+  // Q3 — Cardio (BODY)
   {
+    type: "choice",
     id: "cardio",
     section: "movement",
-    title: "Cardio / elevated HR per week",
-    hint: "Fast walking, running, cycling, swimming — minutes per week",
-    type: "choice",
-    required: true,
+    title: "Cardio — elevated heart rate per week",
+    hint: "Fast walking, running, cycling, swimming — total minutes per week",
     options: [
-      { value: "lt60", label: "Less than 60 min", score: 0 },
-      { value: "60to149", label: "60–149 min", score: 0.25 },
-      { value: "150to299", label: "150–299 min", score: 0.5 },
-      { value: "300to449", label: "300–449 min", score: 0.75 },
-      { value: "450plus", label: "450+ min", score: 1 },
+      { value: "lt60", label: "Less than 60 min" },
+      { value: "60to149", label: "60 – 149 min" },
+      { value: "150to299", label: "150 – 299 min" },
+      { value: "300to449", label: "300 – 449 min" },
+      { value: "450plus", label: "450+ min" },
     ],
   },
+  // Q4 — Strength (BODY)
   {
+    type: "choice",
     id: "strength",
     section: "movement",
-    title: "Strength / resistance training",
-    hint: "Do you regularly do strength training?",
-    type: "choice",
-    required: true,
+    title: "Strength training",
+    hint: "Resistance training — weights, bodyweight, machines",
     options: [
-      { value: "no", label: "No", score: 0 },
-      { value: "1x", label: "1× per week", score: 0.33 },
-      { value: "2to3x", label: "2–3× per week", score: 0.66 },
-      { value: "4plus", label: "4+ × per week", score: 1 },
+      { value: "no", label: "None" },
+      { value: "1x", label: "1× per week" },
+      { value: "2to3x", label: "2 – 3× per week" },
+      { value: "4plus", label: "4+× per week" },
     ],
   },
-
-  // Section 2 — Sleep & Recovery
+  // Q5 — Sleep hours (RECOVERY)
   {
+    type: "choice",
     id: "sleep_hours",
-    section: "recovery",
+    section: "sleep",
     title: "Average sleep duration",
-    hint: "Hours per night, typical",
-    type: "choice",
-    required: true,
+    hint: "Hours per night, most nights",
     options: [
-      { value: "lt5", label: "Less than 5 h", score: 0 },
-      { value: "5to6", label: "5–5.9 h", score: 0.25 },
-      { value: "6to7", label: "6–6.9 h", score: 0.5 },
-      { value: "7to8", label: "7–7.9 h", score: 1 },
-      { value: "8plus", label: "8+ h", score: 1 },
+      { value: "lt5", label: "Less than 5 h" },
+      { value: "5to6", label: "5 – 5.9 h" },
+      { value: "6to7", label: "6 – 6.9 h" },
+      { value: "7to8", label: "7 – 7.9 h" },
+      { value: "8plus", label: "8+ h" },
     ],
   },
+  // Q6 — Sleep quality (RECOVERY ×1.5)
   {
+    type: "choice",
     id: "sleep_quality",
-    section: "recovery",
-    title: "Sleep quality (subjective)",
-    hint: "How rested do you feel when you wake up?",
-    type: "choice",
-    required: true,
+    section: "sleep",
+    title: "Sleep quality",
+    hint: "How rested do you feel on waking?",
     options: [
-      { value: "very_tired", label: "Very tired", score: 0 },
-      { value: "somewhat_tired", label: "Somewhat tired", score: 0.25 },
-      { value: "neutral", label: "Neutral", score: 0.5 },
-      { value: "mostly_rested", label: "Mostly rested", score: 0.75 },
-      { value: "fully_rested", label: "Fully rested", score: 1 },
+      { value: "very_tired", label: "Very tired — exhausted on waking" },
+      { value: "somewhat_tired", label: "Somewhat tired" },
+      { value: "neutral", label: "Neutral — ok but not refreshed" },
+      { value: "mostly_rested", label: "Mostly rested" },
+      { value: "fully_rested", label: "Fully rested" },
     ],
   },
-
-  // Section 3 — Lifestyle Risk
+  // Q7 — Energy (BODY + RECOVERY)
   {
+    type: "choice",
+    id: "energy",
+    section: "sleep",
+    title: "Energy through the day",
+    hint: "Your typical day — not your best or worst",
+    options: [
+      { value: "exhausted", label: "Exhausted — hard to function" },
+      { value: "low", label: "Low — managing but drained" },
+      { value: "moderate", label: "Moderate — some ups and downs" },
+      { value: "good", label: "Good — mostly energised" },
+      { value: "high", label: "Consistently high" },
+    ],
+  },
+  // Q8 — Disconnect (RECOVERY + MIND)
+  {
+    type: "choice",
+    id: "disconnect",
+    section: "sleep",
+    title: "Ability to disconnect from work and devices",
+    hint: "Outside working hours — evenings, weekends",
+    options: [
+      { value: "cannot", label: "Cannot at all — always on" },
+      { value: "rarely", label: "Rarely manage to switch off" },
+      { value: "sometimes", label: "Sometimes — takes effort" },
+      { value: "often", label: "Often — mostly succeeds" },
+      { value: "easily", label: "Easily — clear boundaries" },
+    ],
+  },
+  // Q9 — Smoking (RISK)
+  {
+    type: "choice",
     id: "smoking",
-    section: "lifestyle_risk",
+    section: "lifestyle",
     title: "Smoking / nicotine use",
     hint: "Cigarettes, vapes, IQOS, pods, cigars, hookah",
-    type: "choice",
-    required: true,
     options: [
-      { value: "never", label: "Never", score: 1 },
-      { value: "former", label: "Former user", score: 0.75 },
-      { value: "occasional", label: "Occasionally", score: 0.25 },
-      { value: "daily", label: "Daily", score: 0 },
+      { value: "never", label: "Never" },
+      { value: "former", label: "Former user" },
+      { value: "occasional", label: "Occasionally" },
+      { value: "daily", label: "Daily" },
     ],
   },
+  // Q10 — Alcohol (RISK + METABOLIC)
   {
+    type: "choice",
     id: "alcohol",
-    section: "lifestyle_risk",
+    section: "lifestyle",
     title: "Alcohol — drinks per week",
-    hint: "1 drink = wine / beer / spirits",
-    type: "choice",
-    required: true,
+    hint: "1 drink = glass of wine, bottle of beer, or single spirit",
     options: [
-      { value: "0", label: "0", score: 1 },
-      { value: "1to3", label: "1–3", score: 0.85 },
-      { value: "4to7", label: "4–7", score: 0.6 },
-      { value: "8to14", label: "8–14", score: 0.25 },
-      { value: "15plus", label: "15+", score: 0 },
+      { value: "0", label: "None" },
+      { value: "1to3", label: "1 – 3" },
+      { value: "4to7", label: "4 – 7" },
+      { value: "8to14", label: "8 – 14" },
+      { value: "15plus", label: "15+" },
     ],
   },
+  // Q11 — Processed meat (METABOLIC + RISK)
   {
+    type: "choice",
     id: "processed_meat",
-    section: "lifestyle_risk",
+    section: "lifestyle",
     title: "Processed meat consumption",
-    hint: "Bacon, sausages, salami, hot dogs, deli meats",
-    type: "choice",
-    required: true,
+    hint: "Bacon, sausage, salami, hot dogs, deli meats",
     options: [
-      { value: "never", label: "Never / almost never", score: 1 },
-      { value: "1to2", label: "1–2 times per week", score: 0.66 },
-      { value: "3to4", label: "3–4 times per week", score: 0.33 },
-      { value: "5plus", label: "5+ times per week", score: 0 },
+      { value: "never", label: "Never / almost never" },
+      { value: "1to2", label: "1 – 2 times per week" },
+      { value: "3to4", label: "3 – 4 times per week" },
+      { value: "5plus", label: "5+ times per week" },
     ],
   },
+  // Q12 — Digestion (METABOLIC)
   {
-    id: "seatbelt",
-    section: "lifestyle_risk",
-    title: "Seatbelt use",
     type: "choice",
-    required: true,
+    id: "digestion",
+    section: "lifestyle",
+    title: "Digestive comfort",
+    hint: "Bloating, constipation, heaviness after meals — how often?",
     options: [
-      { value: "always", label: "Always", score: 1 },
-      { value: "often", label: "Often", score: 0.66 },
-      { value: "sometimes", label: "Sometimes", score: 0.33 },
-      { value: "rare", label: "Rarely / Never", score: 0 },
+      { value: "daily", label: "Daily — significant discomfort" },
+      { value: "several_week", label: "Several times a week" },
+      { value: "sometimes", label: "Sometimes" },
+      { value: "rarely", label: "Rarely" },
+      { value: "never", label: "Never — no issues" },
     ],
   },
+  // Q13 — Quality time (MIND)
   {
-    id: "phone_driving",
-    section: "lifestyle_risk",
-    title: "Phone use while driving",
     type: "choice",
-    required: true,
-    options: [
-      { value: "never", label: "Never", score: 1 },
-      { value: "rarely", label: "Rarely", score: 0.66 },
-      { value: "sometimes", label: "Sometimes", score: 0.33 },
-      { value: "often", label: "Often", score: 0 },
-    ],
-  },
-  {
-    id: "motorcycle",
-    section: "lifestyle_risk",
-    title: "Motorcycle riding",
-    hint: "As driver or passenger",
-    type: "choice",
-    required: true,
-    options: [
-      { value: "no", label: "No", score: 1 },
-      { value: "occasional", label: "Occasionally", score: 0.5 },
-      { value: "regular", label: "Regularly", score: 0.25 },
-    ],
-  },
-
-  // Section 5 — Social & Emotional
-  {
     id: "quality_time",
-    section: "emotional",
+    section: "social",
     title: "Quality time with close people",
-    hint: "Not errands or routine — meaningful time",
-    type: "choice",
-    required: true,
+    hint: "Meaningful time — not errands or routine",
     options: [
-      { value: "rarely", label: "Rarely", score: 0 },
-      { value: "1to2_month", label: "1–2 times per month", score: 0.25 },
-      { value: "weekly", label: "Weekly", score: 0.5 },
-      { value: "several_weekly", label: "Several times per week", score: 0.75 },
-      { value: "daily", label: "Almost daily", score: 1 },
+      { value: "rarely", label: "Rarely" },
+      { value: "1to2_month", label: "1 – 2 times per month" },
+      { value: "weekly", label: "Weekly" },
+      { value: "several_weekly", label: "Several times per week" },
+      { value: "daily", label: "Almost daily" },
     ],
   },
+  // Q14 — Relationship satisfaction (MIND)
   {
-    id: "relationship_status",
-    section: "emotional",
-    title: "Relationship status",
     type: "choice",
-    required: true,
-    options: [
-      { value: "single", label: "Single", score: 0.5 },
-      { value: "in_relationship", label: "In a relationship", score: 0.75 },
-      { value: "married", label: "Married / long-term partnership", score: 1 },
-    ],
-  },
-  {
-    id: "relationship_satisfaction",
-    section: "emotional",
+    id: "relationship_sat",
+    section: "social",
     title: "Relationship satisfaction",
     hint: "Or with your situation if single",
-    type: "choice",
-    required: true,
     options: [
-      { value: "very_diss", label: "Very dissatisfied", score: 0 },
-      { value: "diss", label: "Dissatisfied", score: 0.25 },
-      { value: "neutral", label: "Neutral", score: 0.5 },
-      { value: "sat", label: "Satisfied", score: 0.75 },
-      { value: "very_sat", label: "Very satisfied", score: 1 },
+      { value: "very_diss", label: "Very dissatisfied" },
+      { value: "diss", label: "Dissatisfied" },
+      { value: "neutral", label: "Neutral" },
+      { value: "sat", label: "Satisfied" },
+      { value: "very_sat", label: "Very satisfied" },
     ],
   },
+  // Q15 — Stress (MIND + RECOVERY)
   {
+    type: "choice",
     id: "stress",
-    section: "emotional",
+    section: "social",
     title: "Overall stress level",
-    type: "choice",
-    required: true,
+    hint: "Your typical week — not a crisis week",
     options: [
-      { value: "very_high", label: "Very high", score: 0 },
-      { value: "high", label: "High", score: 0.25 },
-      { value: "moderate", label: "Moderate", score: 0.5 },
-      { value: "low", label: "Low", score: 0.75 },
-      { value: "very_low", label: "Very low", score: 1 },
+      { value: "very_high", label: "Very high" },
+      { value: "high", label: "High" },
+      { value: "moderate", label: "Moderate" },
+      { value: "low", label: "Low" },
+      { value: "very_low", label: "Very low" },
     ],
   },
+  // Q16 — Life satisfaction (MIND)
   {
-    id: "life_satisfaction",
-    section: "emotional",
+    type: "choice",
+    id: "life_sat",
+    section: "social",
     title: "Life satisfaction overall",
-    type: "choice",
-    required: true,
     options: [
-      { value: "very_diss", label: "Very dissatisfied", score: 0 },
-      { value: "diss", label: "Dissatisfied", score: 0.25 },
-      { value: "neutral", label: "Neutral", score: 0.5 },
-      { value: "sat", label: "Satisfied", score: 0.75 },
-      { value: "very_sat", label: "Very satisfied", score: 1 },
+      { value: "very_diss", label: "Very dissatisfied" },
+      { value: "diss", label: "Dissatisfied" },
+      { value: "neutral", label: "Neutral" },
+      { value: "sat", label: "Satisfied" },
+      { value: "very_sat", label: "Very satisfied" },
     ],
   },
-
-  // Section 7 — Body & Medical Context (not scored; informs flags)
+  // Q17 — Sex (RISK baseline)
   {
+    type: "choice",
     id: "sex",
-    section: "context",
+    section: "medical",
     title: "Biological sex",
-    type: "choice",
-    required: true,
     options: [
-      { value: "female", label: "Female", score: 0 },
-      { value: "male", label: "Male", score: 0 },
+      { value: "female", label: "Female" },
+      { value: "male", label: "Male" },
+      { value: "prefer_not", label: "Prefer not to say" },
     ],
   },
+  // Q18 — Age (RISK baseline, 55+ → longstay flag)
   {
+    type: "choice",
     id: "age",
-    section: "context",
+    section: "medical",
     title: "Age",
-    type: "choice",
-    required: true,
     options: [
-      { value: "lt25", label: "Under 25", score: 0 },
-      { value: "25to34", label: "25–34", score: 0 },
-      { value: "35to44", label: "35–44", score: 0 },
-      { value: "45to54", label: "45–54", score: 0 },
-      { value: "55plus", label: "55+", score: 0 },
+      { value: "lt25", label: "Under 25" },
+      { value: "25to34", label: "25 – 34" },
+      { value: "35to44", label: "35 – 44" },
+      { value: "45to54", label: "45 – 54" },
+      { value: "55plus", label: "55+" },
     ],
   },
+  // Q19 — Height & Weight (METABOLIC — BMI)
   {
-    id: "weight_kg",
-    section: "context",
-    title: "Body weight (optional)",
-    hint: "kg — used as context for program intensity",
-    type: "number",
-    required: false,
-    min: 30,
-    max: 250,
-    unit: "kg",
+    type: "height_weight",
+    id: "height_weight",
+    section: "medical",
+    title: "Height & Weight",
+    hint: "Optional — used to compute BMI, a key metabolic marker.",
   },
+  // Q20 — Muscle mass (BODY)
   {
+    type: "choice",
     id: "muscle_mass",
-    section: "context",
+    section: "medical",
     title: "Above-average muscle mass?",
-    hint: "From regular strength training; smart scales or DEXA",
-    type: "choice",
-    required: true,
+    hint: "Confirmed by smart scales, DEXA, or consistent heavy training",
     options: [
-      { value: "no", label: "No", score: 0 },
-      { value: "not_sure", label: "Not sure", score: 0 },
-      { value: "yes", label: "Yes", score: 0 },
+      { value: "no", label: "No" },
+      { value: "not_sure", label: "Not sure" },
+      { value: "yes", label: "Yes" },
     ],
   },
+  // Q21 — Endurance athlete (BODY)
   {
+    type: "choice",
     id: "endurance_athlete",
-    section: "context",
+    section: "medical",
     title: "Endurance athlete status",
-    hint: "Training for / competing in Ironman or similar",
-    type: "choice",
-    required: true,
+    hint: "Training for or competing in Ironman, marathon, triathlon, or similar",
     options: [
-      { value: "no", label: "No", score: 0 },
-      { value: "recreational", label: "Recreational endurance", score: 0 },
-      { value: "competitive", label: "Competitive / Ironman", score: 0 },
+      { value: "no", label: "No" },
+      { value: "recreational", label: "Recreational endurance" },
+      { value: "competitive", label: "Competitive / Ironman-level" },
     ],
   },
+  // Q22 — CVD history (RISK + override R7)
   {
+    type: "choice",
     id: "cvd_history",
-    section: "context",
+    section: "medical",
     title: "Cardiovascular disease history",
-    type: "choice",
-    required: true,
+    hint: "Heart attack, stroke, coronary artery disease, heart failure",
     options: [
-      { value: "no", label: "No", score: 0 },
-      { value: "yes", label: "Yes", score: 0 },
+      { value: "no", label: "No" },
+      { value: "yes", label: "Yes" },
     ],
   },
+  // Q23 — Cancer history (RISK + override R1)
   {
-    id: "cancer_history",
-    section: "context",
-    title: "Cancer history",
-    hint: "Any type, including skin",
     type: "choice",
-    required: true,
+    id: "cancer_history",
+    section: "medical",
+    title: "Cancer history",
+    hint: "Any type, including skin cancers",
     options: [
-      { value: "no", label: "No", score: 0 },
-      { value: "yes", label: "Yes", score: 0 },
+      { value: "no", label: "No" },
+      { value: "yes", label: "Yes — in history" },
     ],
   },
 ]
 
+// ──────────────────────────────────────────
+// SCORING ENGINE
+// ──────────────────────────────────────────
+
+// answer_value → raw points (0–4).  ×25 converts to 0–100 scale.
+// RISK questions: higher pts = riskier. All others: higher = better.
+const SCORE: Record<string, Record<string, number>> = {
+  "steps:body":             { lt3k: 0, "3to6k": 1, "6to9k": 2, "9to12k": 3, "12kplus": 4 },
+  "cardio:body":            { lt60: 0, "60to149": 1, "150to299": 2, "300to449": 3, "450plus": 4 },
+  "strength:body":          { no: 0, "1x": 1, "2to3x": 3, "4plus": 4 },
+  "energy:body":            { exhausted: 0, low: 1, moderate: 2, good: 3, high: 4 },
+  "muscle_mass:body":       { no: 2, not_sure: 2, yes: 4 },
+  "endurance_athlete:body": { no: 2, recreational: 3, competitive: 4 },
+
+  "sleep_hours:recovery":   { lt5: 0, "5to6": 1, "6to7": 2, "7to8": 4, "8plus": 3 },
+  "sleep_quality:recovery": { very_tired: 0, somewhat_tired: 1, neutral: 2, mostly_rested: 3, fully_rested: 4 },
+  "energy:recovery":        { exhausted: 0, low: 1, moderate: 2, good: 3, high: 4 },
+  "disconnect:recovery":    { cannot: 0, rarely: 1, sometimes: 2, often: 3, easily: 4 },
+  "stress:recovery":        { very_high: 0, high: 1, moderate: 2, low: 3, very_low: 4 },
+
+  "alcohol:metabolic":        { "0": 4, "1to3": 3, "4to7": 2, "8to14": 1, "15plus": 0 },
+  "processed_meat:metabolic": { never: 4, "1to2": 3, "3to4": 1, "5plus": 0 },
+  "digestion:metabolic":      { daily: 0, several_week: 1, sometimes: 2, rarely: 3, never: 4 },
+
+  "disconnect:mind":       { cannot: 0, rarely: 1, sometimes: 2, often: 3, easily: 4 },
+  "quality_time:mind":     { rarely: 0, "1to2_month": 1, weekly: 2, several_weekly: 3, daily: 4 },
+  "relationship_sat:mind": { very_diss: 0, diss: 1, neutral: 2, sat: 3, very_sat: 4 },
+  "stress:mind":           { very_high: 0, high: 1, moderate: 2, low: 3, very_low: 4 },
+  "life_sat:mind":         { very_diss: 0, diss: 1, neutral: 2, sat: 3, very_sat: 4 },
+
+  "smoking:risk":            { never: 0, former: 0.5, occasional: 2, daily: 4 },
+  "alcohol:risk":            { "0": 0, "1to3": 0.5, "4to7": 1.5, "8to14": 3, "15plus": 4 },
+  "processed_meat:risk":     { never: 0, "1to2": 1, "3to4": 2.5, "5plus": 4 },
+  "sex:risk":                { female: 0.5, male: 1, prefer_not: 0.75 },
+  "age:risk":                { lt25: 0, "25to34": 0.5, "35to44": 1, "45to54": 2.5, "55plus": 4 },
+  "cvd_history:risk":        { no: 0, yes: 4 },
+  "cancer_history:risk":     { no: 0, yes: 4 },
+}
+
+function sc(qId: string, sub: string, answer: unknown): number | null {
+  if (typeof answer !== "string") return null
+  const map = SCORE[`${qId}:${sub}`]
+  if (!map) return null
+  const pts = map[answer]
+  return pts != null ? pts * 25 : null
+}
+
+function wmean(vals: (number | null)[], weights?: number[]): number {
+  let sum = 0, wsum = 0
+  for (let i = 0; i < vals.length; i++) {
+    const v = vals[i]
+    if (v == null) continue
+    const w = weights?.[i] ?? 1
+    sum += v * w
+    wsum += w
+  }
+  return wsum === 0 ? 50 : Math.round(sum / wsum)
+}
+
+function calcBmi(heightCm: unknown, weightKg: unknown): number | null {
+  if (typeof heightCm !== "number" || typeof weightKg !== "number") return null
+  if (heightCm < 100 || weightKg < 20) return null
+  const bmi = weightKg / ((heightCm / 100) ** 2)
+  if (bmi < 18.5) return 50
+  if (bmi < 23) return 100
+  if (bmi < 25) return 75
+  if (bmi < 30) return 50
+  if (bmi < 35) return 25
+  return 0
+}
+
+// Intent → focus area, old-style cohort (1–4) for program matching, internal code
+const INTENT_MAP: Record<string, { focus: string; cohort: number; code: string }> = {
+  A: { focus: "Body & Detox",              cohort: 1, code: "RESET-01" },
+  B: { focus: "Sleep & Recovery",          cohort: 3, code: "RESET-05" },
+  C: { focus: "Weight & Metabolic Health", cohort: 1, code: "RESET-06" },
+  D: { focus: "Beauty & Aesthetics",       cohort: 3, code: "BEAUTY"   },
+  E: { focus: "Longevity",                 cohort: 4, code: "RESET-04" },
+  F: { focus: "Performance & Energy",      cohort: 2, code: "RESET-02" },
+}
+
 export type WbsAnswers = Record<string, string | number | null | undefined>
 
 export type WbsResult = {
-  total: number // 0-100, integer
-  movement: number // 0-100
+  total: number
+  body: number
   recovery: number
-  lifestyle_risk: number
-  emotional: number
-  cohort: 1 | 2 | 3
-  recommendation: "Reset & Recovery" | "Performance & Energy" | "Longevity & Balance"
-  flags: { cvd: boolean; cancer: boolean }
-}
-
-function answerScore(q: WbsQuestion, answer: string | number | null | undefined): number | null {
-  if (q.type !== "choice") return null
-  if (typeof answer !== "string") return null
-  const opt = q.options.find((o) => o.value === answer)
-  return opt?.score ?? null
-}
-
-function sectionAvg(answers: WbsAnswers, section: WbsSection): number {
-  const qs = WBS_QUESTIONS.filter((q) => q.section === section && q.type === "choice")
-  let sum = 0
-  let n = 0
-  for (const q of qs) {
-    const s = answerScore(q, answers[q.id])
-    if (s == null) continue
-    sum += s
-    n += 1
-  }
-  return n === 0 ? 0 : Math.round((sum / n) * 100)
+  metabolic: number
+  mind: number
+  risk: number
+  confidence: number
+  intent: string
+  focus: string
+  cohort: number
+  program_code: string
+  recommended_duration: number
+  medical_review_required: boolean
+  medical_flags: string[]
+  longstay_candidate: boolean
 }
 
 export function computeWbs(answers: WbsAnswers): WbsResult {
-  const movement = sectionAvg(answers, "movement")
-  const recovery = sectionAvg(answers, "recovery")
-  const lifestyle_risk = sectionAvg(answers, "lifestyle_risk")
-  const emotional = sectionAvg(answers, "emotional")
-  const total = Math.round((movement + recovery + lifestyle_risk + emotional) / 4)
+  const a = answers
+  const bmi = calcBmi(a.height_cm, a.weight_kg)
 
-  let cohort: 1 | 2 | 3
-  let recommendation: WbsResult["recommendation"]
-  if (total >= 70) {
-    cohort = 1
-    recommendation = "Reset & Recovery"
-  } else if (total >= 50) {
-    cohort = 2
-    recommendation = "Performance & Energy"
+  const body = wmean([
+    sc("steps", "body", a.steps),
+    sc("cardio", "body", a.cardio),
+    sc("strength", "body", a.strength),
+    sc("energy", "body", a.energy),
+    sc("muscle_mass", "body", a.muscle_mass),
+    sc("endurance_athlete", "body", a.endurance_athlete),
+  ])
+
+  const recovery = wmean(
+    [
+      sc("sleep_hours", "recovery", a.sleep_hours),
+      sc("sleep_quality", "recovery", a.sleep_quality),
+      sc("energy", "recovery", a.energy),
+      sc("disconnect", "recovery", a.disconnect),
+      sc("stress", "recovery", a.stress),
+    ],
+    [1, 1.5, 1, 1, 1],
+  )
+
+  const metabolic = wmean(
+    [bmi, sc("alcohol", "metabolic", a.alcohol), sc("processed_meat", "metabolic", a.processed_meat), sc("digestion", "metabolic", a.digestion)],
+    [1.5, 1, 1, 1],
+  )
+
+  const mind = wmean([
+    sc("stress", "mind", a.stress),
+    sc("life_sat", "mind", a.life_sat),
+    sc("relationship_sat", "mind", a.relationship_sat),
+    sc("quality_time", "mind", a.quality_time),
+    sc("disconnect", "mind", a.disconnect),
+  ])
+
+  const risk = wmean([
+    sc("smoking", "risk", a.smoking),
+    sc("alcohol", "risk", a.alcohol),
+    sc("processed_meat", "risk", a.processed_meat),
+    sc("sex", "risk", a.sex),
+    sc("age", "risk", a.age),
+    sc("cvd_history", "risk", a.cvd_history),
+    sc("cancer_history", "risk", a.cancer_history),
+  ])
+
+  const total = Math.round(0.20 * body + 0.25 * recovery + 0.20 * metabolic + 0.20 * mind + 0.15 * (100 - risk))
+
+  let confidence = 95
+  confidence -= Object.values(a).filter((v) => v === "not_sure").length * 3
+  if (bmi === null) confidence -= 5
+  confidence = Math.max(40, Math.min(95, confidence))
+
+  const medical_flags: string[] = []
+  let medical_review_required = false
+  if (a.cancer_history === "yes") { medical_flags.push("cancer_history"); medical_review_required = true }
+  if (a.cvd_history === "yes") { medical_flags.push("cardiovascular") }
+  if (a.smoking === "daily") { medical_flags.push("nicotine_daily") }
+  if (a.alcohol === "15plus") { medical_flags.push("alcohol_15plus"); medical_review_required = true }
+  else if (a.alcohol === "8to14") { medical_flags.push("alcohol_8to14") }
+  if (body < 20 || recovery < 20 || metabolic < 20 || mind < 20 || total < 35) medical_review_required = true
+
+  const longstay_candidate = a.age === "55plus"
+
+  const intent = typeof a.intent === "string" ? a.intent : ""
+  let mapping = INTENT_MAP[intent]
+  if (!mapping) {
+    // R5: intent skipped — route by worst subscale
+    const ranked = [
+      { s: recovery, key: "B" },
+      { s: metabolic, key: "C" },
+      { s: body,     key: "A" },
+      { s: mind,     key: "B" },
+    ].sort((x, y) => x.s - y.s)
+    mapping = INTENT_MAP[ranked[0].key]
+  }
+
+  // R7: CVD + performance or weight programme → medical review
+  if (a.cvd_history === "yes" && (mapping.code === "RESET-02" || mapping.code === "RESET-06")) {
+    medical_review_required = true
+  }
+
+  let recommended_duration = 8
+  if (mapping.code === "RESET-02") {
+    recommended_duration = body >= 55 ? 4 : body >= 40 ? 6 : 8
   } else {
-    cohort = 3
-    recommendation = "Longevity & Balance"
+    const rel =
+      mapping.code === "RESET-05" ? Math.round((recovery + mind) / 2) :
+      mapping.code === "RESET-01" || mapping.code === "RESET-06" ? Math.round((body + metabolic) / 2) :
+      total
+    recommended_duration = rel <= 35 ? 11 : rel <= 55 ? 8 : 6
   }
 
   return {
     total,
-    movement,
+    body,
     recovery,
-    lifestyle_risk,
-    emotional,
-    cohort,
-    recommendation,
-    flags: {
-      cvd: answers["cvd_history"] === "yes",
-      cancer: answers["cancer_history"] === "yes",
-    },
+    metabolic,
+    mind,
+    risk,
+    confidence,
+    intent,
+    focus: mapping.focus,
+    cohort: mapping.cohort,
+    program_code: mapping.code,
+    recommended_duration,
+    medical_review_required,
+    medical_flags,
+    longstay_candidate,
   }
 }
