@@ -1,9 +1,10 @@
-import { headers } from "next/headers"
+﻿import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { getSessionUser } from "@/lib/auth"
 import { supabaseAdmin } from "@/lib/supabase-server"
 import HomeView from "./_components/HomeView"
 import { mapProgram, type DbProgramRow } from "./_lib/programMapping"
+import type { Review } from "./_components/ReviewsSection"
 
 export const dynamic = "force-dynamic"
 
@@ -43,6 +44,14 @@ export default async function Root() {
     .order("cohort")
     .order("duration_days")
 
+  const { data: reviewRows } = await supabaseAdmin
+    .from("reviews")
+    .select("*")
+    .eq("status", "published")
+    .in("visibility", ["both", "en"])
+    .order("featured", { ascending: false })
+    .order("created_at", { ascending: false })
+
   const programs = ((rows ?? []) as unknown as DbProgramRow[]).map(mapProgram)
-  return <HomeView programs={programs} />
+  return <HomeView programs={programs} reviews={(reviewRows ?? []) as Review[]} />
 }
