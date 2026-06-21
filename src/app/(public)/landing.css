@@ -1,0 +1,409 @@
+/* Dream Islands — Botanical Luxe design tokens & global styles.
+   Adapted from handoff styles.css. Single theme (Botanical), no toggles. */
+
+/* ─── Base reset (extends globals.css) ─── */
+html, body { background: var(--bg); color: var(--ink); }
+body {
+  font-family: var(--font-body);
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "ss02";
+  overflow-x: hidden;
+}
+
+/* ─── Botanical Luxe tokens ─── */
+:root {
+  /* surfaces */
+  --bg:           #F6F1E8;
+  --surface:      #FBF8F2;
+  --surface-2:    #FFFFFF;
+  --surface-inv:  #14201B;
+  --line:         rgba(20,32,27,.10);
+  --line-2:       rgba(20,32,27,.06);
+
+  /* ink */
+  --ink:          #14201B;
+  --ink-2:        #3A4A41;
+  --ink-3:        rgba(20,32,27,.55);
+  --ink-inv:      #F6F1E8;
+
+  /* accent */
+  --accent:       #2F8F6E;
+  --accent-soft:  #C8E8D8;
+  --accent-deep:  #1B5A45;
+  --accent-ink:   #FFFFFF;
+
+  /* track colors (per cohort) */
+  --reset:        #2F8F6E;
+  --longevity:    #C77A3D;
+  --aesthetic:    #B8617E;
+  --sleep:        #4A6FA5;
+  --lean:         #7A8A3C;
+
+  /* type — provided by next/font as CSS variables in layout */
+  --font-mono:    "JetBrains Mono", ui-monospace, monospace;
+
+  /* spacing & shape */
+  --r-sm: 10px;
+  --r-md: 18px;
+  --r-lg: 26px;
+  --r-xl: 32px;
+  --r-pill: 999px;
+  --pad: 20px;
+  --gap: 16px;
+  --shadow-1: 0 1px 2px rgba(20,32,27,.05);
+  --shadow-2: 0 6px 24px -8px rgba(20,32,27,.16), 0 1px 2px rgba(20,32,27,.06);
+  --shadow-3: 0 24px 56px -16px rgba(20,32,27,.25);
+
+  /* card style — shadow by default */
+  --card-bg:      var(--surface-2);
+  --card-border:  1px solid var(--line-2);
+  --card-shadow:  var(--shadow-2);
+}
+
+/* ─── Typography classes ─── */
+.display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -.015em;
+  line-height: 1.02;
+}
+.display-italic { font-style: italic; font-weight: 400; }
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 600;
+}
+
+.body-lg { font-size: 17px; line-height: 1.5; color: var(--ink-2); }
+.body    { font-size: 15px; line-height: 1.5; color: var(--ink-2); }
+.body-sm { font-size: 13px; line-height: 1.45; color: var(--ink-3); }
+
+/* ─── Layout helpers ─── */
+.page { min-height: 100dvh; background: var(--bg); padding-top: env(safe-area-inset-top); }
+.shell {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 var(--pad);
+  position: relative;
+}
+@media (min-width: 900px) {
+  .shell { max-width: 1200px; padding: 0 48px; }
+}
+
+/* Page-specific in-page header — hidden on desktop since topnav covers it */
+@media (min-width: 900px) {
+  .page-header { display: none !important; }
+}
+
+/* ─── Top nav (sticky, mobile + desktop) ─── */
+.topnav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: color-mix(in oklab, var(--bg) 88%, transparent);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-bottom: 1px solid var(--line-2);
+}
+.topnav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+@media (min-width: 900px) {
+  .topnav-inner { padding: 18px 48px; gap: 24px; }
+}
+.topnav-links {
+  display: none;
+  gap: 28px;
+}
+@media (min-width: 900px) {
+  .topnav-links { display: flex; }
+}
+.topnav-links a {
+  font-size: 14px;
+  color: var(--ink-2);
+  letter-spacing: .01em;
+  transition: color .2s;
+}
+.topnav-links a:hover, .topnav-links a.active { color: var(--ink); }
+.topnav-cta { padding: 10px 16px; font-size: 13px; }
+@media (min-width: 900px) {
+  .topnav-cta { padding: 12px 20px; font-size: 14px; }
+}
+
+/* ─── Brand mark ─── */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: -.01em;
+  color: var(--ink);
+}
+.brand-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+}
+
+/* ─── Buttons ─── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 22px;
+  border-radius: var(--r-pill);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: .005em;
+  transition: transform .15s, background .2s, color .2s;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 6px 20px -8px color-mix(in oklab, var(--accent) 70%, transparent);
+}
+.btn-primary:hover { background: var(--accent-deep); }
+.btn-ghost {
+  background: var(--surface-2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+.btn-ghost:hover { background: var(--surface); }
+.btn-soft {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.btn-block { width: 100%; }
+.btn-lg { padding: 20px 26px; font-size: 16px; }
+
+/* ─── Card ─── */
+.card {
+  background: var(--card-bg);
+  border: var(--card-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+
+/* ─── Tag ─── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  letter-spacing: .01em;
+}
+.tag-outline { background: transparent; border: 1px solid var(--line); color: var(--ink-2); }
+
+/* ─── Chat bubble (assessment style) ─── */
+.bubble {
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: 22px;
+  font-size: 15px;
+  line-height: 1.4;
+}
+.bubble-prompt {
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  color: var(--ink);
+  border-bottom-left-radius: 6px;
+  align-self: flex-start;
+}
+.bubble-answer {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-weight: 500;
+  border-bottom-right-radius: 6px;
+  align-self: flex-end;
+}
+
+/* ─── Section header ─── */
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 36px 0 18px;
+  gap: 16px;
+}
+.section-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 36px;
+  letter-spacing: -.02em;
+  line-height: 1.02;
+  color: var(--ink);
+}
+@media (min-width: 900px) { .section-head h2 { font-size: 56px; } }
+
+/* ─── Floating WhatsApp button ─── */
+.fab-wa {
+  position: fixed;
+  bottom: 24px;
+  right: 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #25D366;
+  color: white;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 12px 28px -8px rgba(37,211,102,.55);
+  z-index: 39;
+  transition: transform .2s;
+}
+.fab-wa:hover { transform: scale(1.05); }
+@media (min-width: 900px) {
+  .fab-wa { bottom: 24px; right: 24px; }
+}
+
+/* ─── Decorative blob ─── */
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: .35;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Hero image frame ─── */
+.hero-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  background: var(--surface);
+}
+.hero-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ─── Subtle entry animations ─── */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise { animation: rise .55s ease both; }
+.rise-1 { animation-delay: .05s; }
+.rise-2 { animation-delay: .15s; }
+.rise-3 { animation-delay: .25s; }
+.rise-4 { animation-delay: .35s; }
+
+/* ─── Scrollable program rail ─── */
+.rail {
+  display: flex;
+  gap: var(--gap);
+  overflow-x: auto;
+  overflow-y: visible;
+  scroll-snap-type: x mandatory;
+  padding: 16px var(--pad) 28px;
+  margin: -16px calc(var(--pad) * -1) -16px;
+  scrollbar-width: none;
+}
+.rail::-webkit-scrollbar { display: none; }
+.rail > * { scroll-snap-align: start; flex: 0 0 auto; }
+
+/* ─── Site footer ─── */
+.site-footer {
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  margin-top: 64px;
+  padding: 56px var(--pad) 100px;
+  color: var(--ink-2);
+}
+@media (min-width: 900px) {
+  .site-footer { padding: 80px 48px 56px; }
+}
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  gap: 40px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 720px) {
+  .footer-inner { grid-template-columns: 1fr 1fr; }
+}
+@media (min-width: 1000px) {
+  .footer-inner { grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 56px; }
+}
+.footer-brand { max-width: 380px; }
+.footer-col .eyebrow { color: var(--ink-3); }
+.footer-link {
+  font-size: 14px;
+  color: var(--ink-2);
+  background: none;
+  border: 0;
+  padding: 0;
+  transition: color .2s;
+  cursor: pointer;
+  font-weight: 400;
+  display: inline-block;
+}
+.footer-link:hover { color: var(--accent); }
+.footer-locations {
+  max-width: 1200px;
+  margin: 48px auto 0;
+  padding-top: 32px;
+  border-top: 1px solid var(--line-2);
+}
+.footer-bottom {
+  max-width: 1200px;
+  margin: 32px auto 0;
+  padding-top: 24px;
+  border-top: 1px solid var(--line-2);
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+/* ─── Form field ─── */
+.field {
+  appearance: none;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 15px;
+  font-family: inherit;
+  transition: border-color .15s, box-shadow .15s;
+}
+.field:focus {
+  outline: 0;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.field::placeholder { color: var(--ink-3); }

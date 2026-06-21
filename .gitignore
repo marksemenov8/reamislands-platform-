@@ -1,0 +1,14 @@
+node_modules/
+.next/
+out/
+dist/
+.env
+.env.local
+.env*.local
+.env.production
+.DS_Store
+*.pem
+npm-debug.log*
+next-env.d.ts
+.env.local.bak-
+*.bak-*
