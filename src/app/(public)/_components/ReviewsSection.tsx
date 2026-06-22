@@ -8,7 +8,16 @@
   featured: boolean
 }
 
+function enOnly(s: string | null | undefined): string | null {
+  if (!s) return null
+  const parts = s.split(" / ")
+  return parts.length > 1 ? (parts[1].trim() || parts[0].trim()) : s.trim()
+}
+
 export function ReviewCard({ review: r }: { review: Review }) {
+  const name = enOnly(r.guest_name) ?? r.guest_name
+  const title = enOnly(r.guest_title)
+
   return (
     <article
       style={{
@@ -25,10 +34,10 @@ export function ReviewCard({ review: r }: { review: Review }) {
         &ldquo;{r.text_en}&rdquo;
       </p>
       <div style={{ marginTop: "auto", paddingTop: 12, borderTop: "1px solid rgba(255,255,255,.08)" }}>
-        <div style={{ fontWeight: 600, fontSize: 14, color: "#fff" }}>{r.guest_name}</div>
-        {(r.guest_title || r.country) && (
+        <div style={{ fontWeight: 600, fontSize: 14, color: "#fff" }}>{name}</div>
+        {(title || r.country) && (
           <div style={{ fontSize: 12, color: "rgba(255,255,255,.5)", marginTop: 2 }}>
-            {[r.guest_title, r.country].filter(Boolean).join(" ? ")}
+            {[title, r.country].filter(Boolean).join(" ? ")}
           </div>
         )}
       </div>
